@@ -5,8 +5,11 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.graphics.Color;
 
 
 public class MainActivity extends Activity {
@@ -14,18 +17,30 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+        Window window = this.getWindow();
 
-        WebView view= (WebView) findViewById(R.id.webview);
-        view.getSettings().setJavaScriptEnabled(true);
-        view.getSettings().setBuiltInZoomControls(true);
-        view.getSettings().setSupportZoom(true);
-        view.getSettings().setLoadWithOverviewMode(true);
-        view.getSettings().setUseWideViewPort(true);
-        view.setWebViewClient(new MyCustomWebViewClient());
-        view.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+// clear FLAG_TRANSLUCENT_STATUS flag:
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
-        view.loadUrl("http://toaster-android.meteor.com/");
+// add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+// finally change the color
+        int statusbar_color = Color.rgb(255, 70, 79);
+        window.setStatusBarColor(statusbar_color);
+
+        WebView webview= (WebView) findViewById(R.id.webview);
+        webview.getSettings().setJavaScriptEnabled(true);
+        webview.getSettings().setBuiltInZoomControls(true);
+        webview.getSettings().setSupportZoom(true);
+        webview.getSettings().setLoadWithOverviewMode(true);
+        webview.getSettings().setUseWideViewPort(true);
+        webview.setWebViewClient(new MyCustomWebViewClient());
+        webview.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+
+        webview.loadUrl("http://toaster-android.meteor.com/");
     }
 
     @Override
@@ -48,6 +63,16 @@ public class MainActivity extends Activity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        WebView webview = (WebView) findViewById(R.id.webview);
+        if(webview.canGoBack()){
+            webview.goBack();
+        }else{
+            super.onBackPressed();
+        }
     }
 
     private class MyCustomWebViewClient extends WebViewClient {
