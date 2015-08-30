@@ -11,6 +11,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebBackForwardList;
 import android.graphics.Color;
+import android.util.Log;
 
 
 public class MainActivity extends Activity {
@@ -23,14 +24,11 @@ public class MainActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
         Window window = this.getWindow();
-
-// clear FLAG_TRANSLUCENT_STATUS flag:
+        // clear FLAG_TRANSLUCENT_STATUS flag:
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-
-// add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
+        // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-
-// finally change the color
+        // finally change the color
         int statusbar_color = Color.rgb(255, 70, 79);
         window.setStatusBarColor(statusbar_color);
 
@@ -43,7 +41,8 @@ public class MainActivity extends Activity {
         mWebView.setWebViewClient(new MyCustomWebViewClient());
         mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
-        mWebView.loadUrl("http://toaster-android.meteor.com/");
+//        mWebView.loadUrl("http://toaster-android.meteor.com/");
+        mWebView.loadUrl("http://192.168.0.106:3000");
     }
 
     @Override
@@ -71,7 +70,7 @@ public class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
 
-        if(mWebView.canGoBack()){
+        if(webCanGoBack()){
 //            webview.goBack();
             mWebView.loadUrl("javascript:$('[data-nav-container]').addClass('nav-view-direction-back');$('[data-navbar-container]').addClass('nav-bar-direction-back');history.back();");
         }else{
@@ -87,21 +86,20 @@ public class MainActivity extends Activity {
         }
     }
 
-    private class MyCustomWebView extends WebView {
 
-        @Override
-        public boolean canGoBack() {
-            String historyUrl="";
-            WebBackForwardList mWebBackForwardList = this.copyBackForwardList();
-            if (mWebBackForwardList.getCurrentIndex() > 0) {
-                historyUrl = mWebBackForwardList.getItemAtIndex(mWebBackForwardList.getCurrentIndex() - 1).getUrl();
-                if (historyUrl.contains("signUp") || historyUrl.contains("signIn")) {
-                    return false;
-                }
+    private boolean webCanGoBack() {
+        String historyUrl="";
+        WebBackForwardList mWebBackForwardList = mWebView.copyBackForwardList();
+        if (mWebBackForwardList.getCurrentIndex() > 0) {
+//            historyUrl = mWebBackForwardList.getItemAtIndex(mWebBackForwardList.getCurrentIndex() - 1).getUrl();
+//            Log.d("historyUrl", historyUrl);
+
+            if (mWebView.getUrl().contains("posts")) {
                 return true;
-            }else {
-                return super.canGoBack();
             }
+            return false;
+        }else {
+            return mWebView.canGoBack();
         }
     }
 }
