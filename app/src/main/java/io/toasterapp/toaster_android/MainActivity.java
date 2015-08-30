@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
 //            historyUrl = mWebBackForwardList.getItemAtIndex(mWebBackForwardList.getCurrentIndex() - 1).getUrl();
 //            Log.d("historyUrl", historyUrl);
 
-            if (mWebView.getUrl().contains("posts")) {
+            if (mWebView.getUrl().contains("posts") || mWebView.getUrl().contains("settings")) {
                 return true;
             }
             return false;
