@@ -9,10 +9,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebBackForwardList;
 import android.graphics.Color;
 
 
 public class MainActivity extends Activity {
+
+    private WebView mWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,16 +34,16 @@ public class MainActivity extends Activity {
         int statusbar_color = Color.rgb(255, 70, 79);
         window.setStatusBarColor(statusbar_color);
 
-        WebView webview= (WebView) findViewById(R.id.webview);
-        webview.getSettings().setJavaScriptEnabled(true);
-        webview.getSettings().setBuiltInZoomControls(true);
-        webview.getSettings().setSupportZoom(true);
-        webview.getSettings().setLoadWithOverviewMode(true);
-        webview.getSettings().setUseWideViewPort(true);
-        webview.setWebViewClient(new MyCustomWebViewClient());
-        webview.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        mWebView = (WebView) findViewById(R.id.webview);
+        mWebView.getSettings().setJavaScriptEnabled(true);
+        mWebView.getSettings().setBuiltInZoomControls(true);
+        mWebView.getSettings().setSupportZoom(true);
+        mWebView.getSettings().setLoadWithOverviewMode(true);
+        mWebView.getSettings().setUseWideViewPort(true);
+        mWebView.setWebViewClient(new MyCustomWebViewClient());
+        mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
-        webview.loadUrl("http://toaster-android.meteor.com/");
+        mWebView.loadUrl("http://toaster-android.meteor.com/");
     }
 
     @Override
@@ -67,9 +70,10 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        WebView webview = (WebView) findViewById(R.id.webview);
-        if(webview.canGoBack()){
-            webview.goBack();
+
+        if(mWebView.canGoBack()){
+//            webview.goBack();
+            mWebView.loadUrl("javascript:$('[data-nav-container]').addClass('nav-view-direction-back');$('[data-navbar-container]').addClass('nav-bar-direction-back');history.back();");
         }else{
             super.onBackPressed();
         }
@@ -80,6 +84,24 @@ public class MainActivity extends Activity {
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             view.loadUrl(url);
             return false;
+        }
+    }
+
+    private class MyCustomWebView extends WebView {
+
+        @Override
+        public boolean canGoBack() {
+            String historyUrl="";
+            WebBackForwardList mWebBackForwardList = this.copyBackForwardList();
+            if (mWebBackForwardList.getCurrentIndex() > 0) {
+                historyUrl = mWebBackForwardList.getItemAtIndex(mWebBackForwardList.getCurrentIndex() - 1).getUrl();
+                if (historyUrl.contains("signUp") || historyUrl.contains("signIn")) {
+                    return false;
+                }
+                return true;
+            }else {
+                return super.canGoBack();
+            }
         }
     }
 }
