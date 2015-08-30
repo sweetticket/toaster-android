@@ -7,6 +7,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebBackForwardList;
@@ -23,6 +24,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
+
         Window window = this.getWindow();
         // clear FLAG_TRANSLUCENT_STATUS flag:
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
@@ -33,16 +35,35 @@ public class MainActivity extends Activity {
         window.setStatusBarColor(statusbar_color);
 
         mWebView = (WebView) findViewById(R.id.webview);
-        mWebView.getSettings().setJavaScriptEnabled(true);
-        mWebView.getSettings().setBuiltInZoomControls(true);
-        mWebView.getSettings().setSupportZoom(true);
-        mWebView.getSettings().setLoadWithOverviewMode(true);
-        mWebView.getSettings().setUseWideViewPort(true);
+
+        WebSettings settings = mWebView.getSettings();
+        settings.setJavaScriptEnabled(true);
+
+        settings.setDatabaseEnabled(true);
+        settings.setDomStorageEnabled(true);
+
+        settings.setBuiltInZoomControls(true);
+        settings.setSupportZoom(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
         mWebView.setWebViewClient(new MyCustomWebViewClient());
         mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        if (savedInstanceState == null) {
+            mWebView.loadUrl("http://192.168.0.106:3000");
+        }
+    }
 
-//        mWebView.loadUrl("http://toaster-android.meteor.com/");
-        mWebView.loadUrl("http://192.168.0.106:3000");
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mWebView.saveState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+            super.onRestoreInstanceState(savedInstanceState);
+        // Restore the state of the WebView
+            mWebView.restoreState(savedInstanceState);
     }
 
     @Override
@@ -76,6 +97,7 @@ public class MainActivity extends Activity {
         }else{
             super.onBackPressed();
         }
+
     }
 
     private class MyCustomWebViewClient extends WebViewClient {
