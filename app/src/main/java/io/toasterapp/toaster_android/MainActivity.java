@@ -15,11 +15,13 @@ import android.webkit.WebViewClient;
 import android.webkit.WebBackForwardList;
 import android.graphics.Color;
 import android.util.Log;
+import org.xwalk.core.XWalkPreferences;
+import org.xwalk.core.XWalkView;
 
 
 public class MainActivity extends Activity {
 
-    private WebView mWebView;
+    private XWalkView mWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,19 +38,19 @@ public class MainActivity extends Activity {
         int statusbar_color = Color.rgb(255, 70, 79);
         window.setStatusBarColor(statusbar_color);
 
-        mWebView = (WebView) findViewById(R.id.webview);
+        mWebView = (XWalkView) findViewById(R.id.xwalkWebView);
 
-        WebSettings settings = mWebView.getSettings();
-        settings.setJavaScriptEnabled(true);
-
-        settings.setDatabaseEnabled(true);
-        settings.setDomStorageEnabled(true);
-
-        settings.setBuiltInZoomControls(true);
-        settings.setSupportZoom(true);
-        settings.setLoadWithOverviewMode(true);
-        settings.setUseWideViewPort(true);
-        mWebView.setWebViewClient(new MyCustomWebViewClient());
+//        WebSettings settings = mWebView.getSettings();
+//        settings.setJavaScriptEnabled(true);
+//
+//        settings.setDatabaseEnabled(true);
+//        settings.setDomStorageEnabled(true);
+//
+//        settings.setBuiltInZoomControls(true);
+//        settings.setSupportZoom(true);
+//        settings.setLoadWithOverviewMode(true);
+//        settings.setUseWideViewPort(true);
+//        mWebView.setWebViewClient(new MyCustomWebViewClient());
         mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
 //        mWebView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -67,11 +69,37 @@ public class MainActivity extends Activity {
 //        });
 
         if (savedInstanceState==null) {
-            mWebView.loadUrl("http://192.168.0.106:3000");
+            mWebView.load("http://104.131.158.80/", null);
         }
     }
 
-        @Override
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mWebView != null) {
+            mWebView.pauseTimers();
+            mWebView.onHide();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mWebView != null) {
+            mWebView.resumeTimers();
+            mWebView.onShow();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mWebView != null) {
+            mWebView.onDestroy();
+        }
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         mWebView.saveState(outState);
@@ -111,7 +139,7 @@ public class MainActivity extends Activity {
 
         if(webCanGoBack()){
 //            webview.goBack();
-            mWebView.loadUrl("javascript:$('[data-nav-container]').addClass('nav-view-direction-back');$('[data-navbar-container]').addClass('nav-bar-direction-back');history.back();");
+            mWebView.load("javascript:$('[data-nav-container]').addClass('nav-view-direction-back');$('[data-navbar-container]').addClass('nav-bar-direction-back');history.back();", null);
         }else{
             super.onBackPressed();
         }
@@ -148,9 +176,9 @@ public class MainActivity extends Activity {
 
 
     private boolean webCanGoBack() {
-        String historyUrl="";
-        WebBackForwardList mWebBackForwardList = mWebView.copyBackForwardList();
-        if (mWebBackForwardList.getCurrentIndex() > 0) {
+//        String historyUrl="";
+//        WebBackForwardList mWebBackForwardList = mWebView.copyBackForwardList();
+//        if (mWebBackForwardList.getCurrentIndex() > 0) {
 //            historyUrl = mWebBackForwardList.getItemAtIndex(mWebBackForwardList.getCurrentIndex() - 1).getUrl();
 //            Log.d("historyUrl", historyUrl);
 
@@ -158,8 +186,8 @@ public class MainActivity extends Activity {
                 return true;
             }
             return false;
-        }else {
-            return mWebView.canGoBack();
-        }
+//        }else {
+//            return mWebView.canGoBack();
+//        }
     }
 }

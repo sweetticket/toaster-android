@@ -6,10 +6,18 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <WebView  xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/webview"
+    <!--<WebView  xmlns:android="http://schemas.android.com/apk/res/android"-->
+        <!--android:id="@+id/webview"-->
+        <!--android:layout_width="fill_parent"-->
+        <!--android:layout_height="fill_parent"-->
+        <!--/>-->
+
+    <org.xwalk.core.XWalkView
+        android:id="@+id/xwalkWebView"
+        android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:background="#000000"
         />
 
 </RelativeLayout>
