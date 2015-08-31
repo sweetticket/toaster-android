@@ -2,6 +2,7 @@ package io.toasterapp.toaster_android;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -48,6 +49,14 @@ public class MainActivity extends Activity {
         settings.setSupportZoom(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        
+        if (Build.VERSION.SDK_INT >= 19) {
+            mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        }
+        else {
+            mWebView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
         mWebView.setWebViewClient(new MyCustomWebViewClient());
         mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
@@ -109,7 +118,7 @@ public class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
 
-        if(webCanGoBack()){
+        if (webCanGoBack()) {
 //            webview.goBack();
             mWebView.loadUrl("javascript:$('[data-nav-container]').addClass('nav-view-direction-back');$('[data-navbar-container]').addClass('nav-bar-direction-back');history.back();");
         }else{
