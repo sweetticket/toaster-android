@@ -2,6 +2,7 @@ package io.toasterapp.toaster_android;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -10,6 +11,9 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.ConsoleMessage;
+import android.webkit.JsResult;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -17,10 +21,23 @@ import android.webkit.WebBackForwardList;
 import android.graphics.Color;
 import android.util.Log;
 
+import com.pusher.client.Pusher;
+import com.pusher.client.PusherOptions;
+import com.pusher.client.channel.Channel;
+import com.pusher.client.channel.PrivateChannel;
+import com.pusher.client.channel.PrivateChannelEventListener;
+import com.pusher.client.channel.SubscriptionEventListener;
+import com.pusher.client.connection.ConnectionEventListener;
+import com.pusher.client.connection.ConnectionState;
+import com.pusher.client.connection.ConnectionStateChange;
+import com.pusher.client.util.HttpAuthorizer;
 
 public class MainActivity extends Activity {
 
-    private WebView mWebView;
+    private static WebView mWebView;
+    private static String mUserId;
+    private static PrivateChannel mChannel;
+    private static Pusher mPusher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +67,12 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+
+        settings.setUserAgentString(
+                settings.getUserAgentString()
+                        + " "
+                        + getString(R.string.user_agent_suffix)
+        );
         
         if (Build.VERSION.SDK_INT >= 19) {
             mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -58,6 +81,7 @@ public class MainActivity extends Activity {
             mWebView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
         mWebView.setWebViewClient(new MyCustomWebViewClient());
+        mWebView.setWebChromeClient(new MyWebChromeClient());
         mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
 //        mWebView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -78,6 +102,13 @@ public class MainActivity extends Activity {
         if (savedInstanceState==null) {
             mWebView.loadUrl("http://192.168.0.106:3000");
         }
+
+        SharedPreferences prefs = getSharedPreferences("UserInfo", 0);
+        if (prefs.getString("userId", "").toString() != null) {
+            mUserId = prefs.getString("userId", "").toString();
+            Log.d("mUserId", mUserId);
+        }
+
     }
 
         @Override
@@ -132,9 +163,9 @@ public class MainActivity extends Activity {
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             view.loadUrl(url);
 
-            if (url.contains("posts")) {
-
-            }
+//            if (url.contains("posts")) {
+//
+//            }
 
             return false;
         }
@@ -171,4 +202,95 @@ public class MainActivity extends Activity {
             return mWebView.canGoBack();
         }
     }
+
+    final class MyWebChromeClient extends WebChromeClient {
+        @Override
+        public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
+
+            if (message.contains("logout")) {
+                mPusher.disconnect();
+                return true;
+            }
+            Log.d("Sign in userId", message);
+
+            SharedPreferences prefs = getSharedPreferences("UserInfo", 0);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("userId", message);
+            editor.commit();
+            mUserId = message;
+
+            HttpAuthorizer authorizer = new HttpAuthorizer("http://example.com/some_auth_endpoint");
+            PusherOptions options = new PusherOptions().setAuthorizer(authorizer);
+
+            mPusher = new Pusher("3f8ba7f168a24152f488", options);
+
+            mPusher.connect(new ConnectionEventListener() {
+                @Override
+                public void onConnectionStateChange(ConnectionStateChange change) {
+                    System.out.println("State changed to " + change.getCurrentState() +
+                            " from " + change.getPreviousState());
+                    if (change.getCurrentState() == ConnectionState.CONNECTED) {
+                        mPusher.connect();
+                    }
+                }
+
+                @Override
+                public void onError(String message, String code, Exception e) {
+                    System.out.println("There was a problem connecting!");
+                }
+            }, ConnectionState.ALL);
+
+            // Subscribe to a channel
+            mChannel = mPusher.subscribePrivate("userId",
+                    new PrivateChannelEventListener() {
+                        @Override
+                        public void onEvent(String channelName, String eventName, String data) {
+                            //TODO
+                            Log.d("channel event", channelName);
+                        }
+
+                        @Override
+                        public void onSubscriptionSucceeded(String channelName) {
+                            //TODO
+                            Log.d("subscription success", channelName);
+                        }
+
+                        @Override
+                        public void onAuthenticationFailure(String message, Exception e) {
+                            System.out.println(
+                                    String.format("Authentication failure due to [%s], exception was [%s]", message, e)
+                            );
+                        }
+
+                        // Other ChannelEventListener methods
+                    });
+
+            // Bind to listen for events called "my-event" sent to "my-channel"
+            mChannel.bind("my-event", new SubscriptionEventListener() {
+                @Override
+                public void onEvent(String channel, String event, String data) {
+                    System.out.println("Received event with data: " + data);
+                }
+            });
+
+            result.confirm();
+            return true;
+        }
+    }
+
+//
+//    @Override
+//    public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+//        Log.d("SampleActivity", consoleMessage.message() + " -- From line "
+//                + consoleMessage.lineNumber() + " of "
+//                + consoleMessage.sourceId() );
+//
+//
+//        SharedPreferences prefs = getSharedPreferences("UserInfo", 0);
+//        SharedPreferences.Editor editor = prefs.edit();
+//        editor.putString("userId", consoleMessage.message());
+//        editor.commit();
+//
+//        return true;
+//    }
 }
